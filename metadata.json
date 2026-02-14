@@ -1,0 +1,7 @@
+{
+  "name": "GenX Overseas",
+  "description": "A high-end import-export business showcase featuring an AI-powered trade consultant, global reach visualizations, and an extensive product catalog.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
