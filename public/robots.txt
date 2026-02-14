@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://genx-overseas.web.app/sitemap.xml
