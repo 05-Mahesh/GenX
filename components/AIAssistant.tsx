@@ -5,11 +5,11 @@ import { ChatMessage } from '../types';
 
 const AIAssistant: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: "Hello! I'm your GenX Trade Researcher. How can I assist you today with Indian market insights, sourcing, or logistics?" }
+    { role: 'model', text: "Welcome to the GenX Trade Intelligence Desk. I can provide real-time Indian market prices, HS Code details, and logistics guidance. How can I assist your business today?" }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [errorOccurred, setErrorOccurred] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -20,14 +20,6 @@ const AIAssistant: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleOpenKeySelection = async () => {
-    if (window.aistudio?.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      // Assume success and refresh state
-      setErrorOccurred(false);
-    }
-  };
-
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -35,60 +27,78 @@ const AIAssistant: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
-    setErrorOccurred(false);
+    setSetupError(null);
 
     try {
-      const advice = await getTradeAdvice(input, messages);
-      setMessages(prev => [...prev, { role: 'model', text: advice }]);
+      const response = await getTradeAdvice(input, messages);
+      
+      if (response.includes("CONFIG_ERROR") || response.includes("AUTH_ERROR")) {
+        setSetupError(response);
+      } else {
+        setMessages(prev => [...prev, { role: 'model', text: response }]);
+      }
     } catch (err) {
-      setErrorOccurred(true);
-      setMessages(prev => [...prev, { role: 'model', text: "Connection error: aistudio.google.com refused to connect. Please check your API key settings." }]);
+      setMessages(prev => [...prev, { role: 'model', text: "Unable to establish connection. For urgent trade inquiries, email genxoverseasindia1@gmail.com." }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <section id="ai" className="py-24 bg-indigo-50/50">
+    <section id="ai" className="py-24 bg-slate-50">
       <div className="container mx-auto px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Indian Trade Consultant</h2>
-            <p className="text-slate-600">Real-time intelligence for Indian sourcing and global logistics.</p>
+            <span className="text-indigo-600 font-bold uppercase tracking-widest text-[10px] mb-3 block">Enterprise Intelligence</span>
+            <h2 className="text-3xl md:text-5xl font-serif font-bold mb-4">Trade Research Desk</h2>
+            <p className="text-slate-500">Professional market data & sourcing research for global importers.</p>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 h-[650px] flex flex-col">
-            {/* Chat Header */}
-            <div className="bg-slate-900 p-6 flex items-center justify-between">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 h-[700px] flex flex-col relative">
+            {/* Enhanced Setup Overlay */}
+            {setupError && (
+              <div className="absolute inset-0 z-50 bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-12 text-center">
+                <div className="bg-white p-10 rounded-[3rem] max-w-md shadow-2xl border border-white/20">
+                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-slate-900">Deployment Required</h3>
+                  <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                    {setupError.includes("CONFIG_ERROR") 
+                      ? "You've added the API key in Vercel settings, but your live site doesn't see it yet. You MUST click 'REDEPLOY' in the Vercel Deployments tab."
+                      : "The API Key provided returned an authentication error. Please check for extra spaces or missing characters."}
+                  </p>
+                  <div className="space-y-3">
+                    <a href="https://vercel.com" target="_blank" className="block w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-xl">Go to Vercel & Redeploy</a>
+                    <button onClick={() => setSetupError(null)} className="block w-full text-slate-400 py-2 text-[9px] uppercase font-bold tracking-[0.3em] hover:text-indigo-600 transition-colors">Dismiss & Retry</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-slate-900 p-6 flex items-center justify-between border-b border-white/5">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center animate-pulse">
+                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-white font-bold leading-none">GenX Research Bot</h3>
-                  <p className="text-indigo-400 text-xs mt-1 font-medium tracking-wide uppercase">Active - Gemini 3 Powered</p>
+                  <h3 className="text-white font-bold text-lg">Trade Strategist</h3>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Verified Export Data</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                {errorOccurred && (
-                  <button 
-                    onClick={handleOpenKeySelection}
-                    className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition-all font-bold uppercase tracking-wider"
-                  >
-                    Fix Connection
-                  </button>
-                )}
-                <span className="hidden sm:block text-slate-400 text-xs">v4.0 Enterprise</span>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30">
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/50">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-5 rounded-2xl shadow-sm ${
+                  <div className={`max-w-[90%] p-6 rounded-3xl shadow-sm ${
                     msg.role === 'user' 
                     ? 'bg-indigo-600 text-white rounded-tr-none' 
                     : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
@@ -99,48 +109,38 @@ const AIAssistant: React.FC = () => {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white border border-slate-100 p-5 rounded-2xl rounded-tl-none flex space-x-1 shadow-sm">
+                  <div className="bg-white border border-slate-100 p-6 rounded-3xl rounded-tl-none flex items-center space-x-2 shadow-sm">
                     <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.1s]"></div>
+                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.2s]"></div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-2">Browsing Markets...</span>
                   </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-8 border-t border-slate-100 bg-white">
-              <div className="relative flex items-center">
+            <div className="p-8 bg-white border-t border-slate-100">
+              <div className="relative group">
                 <input 
                   type="text" 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Ask about Indian turmeric market research or mobile logistics..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4.5 pl-6 pr-16 text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent transition-all outline-none"
+                  placeholder="Ask about Salem Turmeric price or Mundra shipping..."
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-5 pl-8 pr-20 text-sm focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 transition-all outline-none"
                 />
                 <button 
                   onClick={handleSend}
                   disabled={isLoading}
-                  className={`absolute right-3 p-3 rounded-xl transition-all shadow-md ${
-                    isLoading ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-indigo-600'
+                  className={`absolute right-3 top-2.5 p-4 rounded-xl shadow-lg transition-all ${
+                    isLoading ? 'bg-slate-200 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-600 transform hover:-translate-y-0.5'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </button>
-              </div>
-              <div className="flex justify-between items-center mt-4 px-2">
-                <p className="text-[10px] text-slate-400">
-                  Powered by Gemini 3 Flash. Global Trade Analysis Engine.
-                </p>
-                {errorOccurred && (
-                  <p className="text-[10px] text-red-500 font-bold animate-pulse">
-                    Connection Refused. Try resetting key.
-                  </p>
-                )}
               </div>
             </div>
           </div>
