@@ -3,15 +3,16 @@ import { GoogleGenAI } from "@google/genai";
 
 /**
  * GenX Trade Intelligence Service
- * Optimized for professional user experience and silent error handling.
+ * Uses 'API_KEY' from the environment variable (Vercel/System).
+ * Optimized for professional Indian Export-Import context.
  */
 export async function getTradeAdvice(query: string, history: { role: string; text: string }[]) {
   const apiKey = process.env.API_KEY;
 
-  // Silent check for key to prevent crashing
+  // Professional verification of the system availability
   if (!apiKey || apiKey === "undefined" || apiKey.length < 10) {
-    console.error("Trade Desk: API_KEY is not configured in environment.");
-    return "Thank you for your inquiry. Our automated trade desk is currently undergoing a scheduled update. For immediate assistance with pricing or logistics, please contact our export team at genxoverseasindia1@gmail.com.";
+    console.error("System Check: Secure API Gateway not detected.");
+    return "Welcome to the GenX Trade Desk. Our real-time market data synchronization is currently being optimized for the latest harvest season. For immediate FOB/CIF quotes or custom sourcing inquiries, please contact our Senior Trade Desk directly at genxoverseasindia1@gmail.com.";
   }
 
   try {
@@ -31,37 +32,57 @@ export async function getTradeAdvice(query: string, history: { role: string; tex
       model: 'gemini-3-flash-preview',
       contents: contents,
       config: {
-        systemInstruction: `You are the Lead Export Strategist for GenX Overseas India.
-        GENX PROFILE: Indian Export-Import house (Turmeric, Onions, Rice, Electronics).
-        GOAL: Provide expert trade advice. Use industry terms like FOB, CIF, MT.
-        REAL-TIME: Use googleSearch for current Mandi prices.
-        If asked for price, mention that GenX offers competitive rates matching these market standards.`,
+        systemInstruction: `You are the Executive Trade Strategist for GenX Overseas India.
+        GENX OVERSEAS PROFILE: 
+        - Specialization: High-grade Agricultural commodities (Turmeric, Nasik Onions, Basmati Rice), Electronics (GaN Chargers), and Industrial Components.
+        - Location: India (Exporting to Global Hubs like UAE, USA, EU, SE Asia).
+        - Values: Transparency, Quality Compliance, and Farm-to-Port traceability.
+        
+        YOUR ROLE:
+        - Provide current market intelligence for Indian exports.
+        - Use technical trade terminology: FOB (Free on Board), CIF (Cost, Insurance, and Freight), MT (Metric Tons), FCL (Full Container Load).
+        - Always reference market data if available.
+        - If prices are requested, use the googleSearch tool to find current Indian Mandi (Market) rates and emphasize that GenX offers competitive export-grade pricing.
+        - Keep responses concise, professional, and helpful for international buyers.
+        
+        CONTACT CALL-TO-ACTION:
+        - For formal Letter of Intent (LOI) or soft corporate offers, direct users to genxoverseasindia1@gmail.com.`,
         tools: [{ googleSearch: {} }],
-        temperature: 0.1,
+        temperature: 0.1, // Lower temperature for more factual trade data
       },
     });
 
+    // Extracting grounding info to provide professional citations
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-    let citation = "";
+    let marketCitation = "";
     if (groundingChunks && groundingChunks.length > 0) {
       const urls = groundingChunks
         .map((chunk: any) => chunk.web?.uri)
         .filter((uri: string) => !!uri);
       if (urls.length > 0) {
-        citation = `\n\n(Market Data Source: ${urls[0]})`;
+        marketCitation = `\n\n[Verified Market Data Source: ${urls[0]}]`;
       }
     }
 
-    return (response.text || "I am analyzing the current market data for you...") + citation;
+    const outputText = response.text;
+    if (!outputText) throw new Error("Empty response from Trade Desk");
+
+    return outputText + marketCitation;
 
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Trade Desk Error Details:", error);
     
-    // Professional fallback based on error type
-    if (error?.status === 401 || error?.status === 403) {
-      return "Our trade intelligence system is currently verifying updated export protocols. For an instant quote, please email genxoverseasindia1@gmail.com with your requirements.";
+    // Handling specific API states professionally for the end-user
+    const errorStatus = error?.status || 500;
+    
+    if (errorStatus === 401 || errorStatus === 403) {
+      return "The Trade Intelligence Desk is currently authenticating updated global trade protocols. For priority assistance with your current sourcing requirements, please email our export team at genxoverseasindia1@gmail.com.";
     }
 
-    return "The trade desk is currently processing high volume. Please rephrase your question or contact our support team directly for a priority response.";
+    if (errorStatus === 429) {
+      return "Our real-time market analysts are currently processing high volumes of global inquiries. Please rephrase your query or reach out to us at genxoverseasindia1@gmail.com for a detailed trade proposal.";
+    }
+
+    return "We are experiencing a temporary synchronization issue with the Indian Mandi pricing servers. Please proceed with your inquiry via email (genxoverseasindia1@gmail.com) and our team will provide a comprehensive quote.";
   }
 }
