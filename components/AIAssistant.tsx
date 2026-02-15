@@ -9,7 +9,6 @@ const AIAssistant: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [setupError, setSetupError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -27,18 +26,12 @@ const AIAssistant: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
-    setSetupError(null);
 
     try {
       const response = await getTradeAdvice(input, messages);
-      
-      if (response.includes("CONFIG_ERROR") || response.includes("AUTH_ERROR")) {
-        setSetupError(response);
-      } else {
-        setMessages(prev => [...prev, { role: 'model', text: response }]);
-      }
+      setMessages(prev => [...prev, { role: 'model', text: response }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'model', text: "Unable to establish connection. For urgent trade inquiries, email genxoverseasindia1@gmail.com." }]);
+      setMessages(prev => [...prev, { role: 'model', text: "Service temporarily unavailable. Please contact our trade desk at genxoverseasindia1@gmail.com for priority assistance." }]);
     } finally {
       setIsLoading(false);
     }
@@ -55,29 +48,6 @@ const AIAssistant: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 h-[700px] flex flex-col relative">
-            {/* Enhanced Setup Overlay */}
-            {setupError && (
-              <div className="absolute inset-0 z-50 bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-12 text-center">
-                <div className="bg-white p-10 rounded-[3rem] max-w-md shadow-2xl border border-white/20">
-                  <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3 text-slate-900">Deployment Required</h3>
-                  <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-                    {setupError.includes("CONFIG_ERROR") 
-                      ? "You've added the API key in Vercel settings, but your live site doesn't see it yet. You MUST click 'REDEPLOY' in the Vercel Deployments tab."
-                      : "The API Key provided returned an authentication error. Please check for extra spaces or missing characters."}
-                  </p>
-                  <div className="space-y-3">
-                    <a href="https://vercel.com" target="_blank" className="block w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-xl">Go to Vercel & Redeploy</a>
-                    <button onClick={() => setSetupError(null)} className="block w-full text-slate-400 py-2 text-[9px] uppercase font-bold tracking-[0.3em] hover:text-indigo-600 transition-colors">Dismiss & Retry</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="bg-slate-900 p-6 flex items-center justify-between border-b border-white/5">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -113,7 +83,7 @@ const AIAssistant: React.FC = () => {
                     <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
                     <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.1s]"></div>
                     <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.2s]"></div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-2">Browsing Markets...</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-2">Analyzing...</span>
                   </div>
                 </div>
               )}
@@ -134,7 +104,7 @@ const AIAssistant: React.FC = () => {
                   onClick={handleSend}
                   disabled={isLoading}
                   className={`absolute right-3 top-2.5 p-4 rounded-xl shadow-lg transition-all ${
-                    isLoading ? 'bg-slate-200 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-600 transform hover:-translate-y-0.5'
+                    isLoading ? 'bg-slate-200 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-600'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
