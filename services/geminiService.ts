@@ -3,14 +3,15 @@ import { GoogleGenAI } from "@google/genai";
 
 /**
  * GenX Trade Intelligence Service
- * Optimized for Vercel Environment Variables.
+ * Optimized for professional user experience and silent error handling.
  */
 export async function getTradeAdvice(query: string, history: { role: string; text: string }[]) {
   const apiKey = process.env.API_KEY;
 
-  // 1. Initial Check for the Key
-  if (!apiKey || apiKey === "undefined" || apiKey === "" || apiKey.length < 10) {
-    return "CONFIG_ERROR: The 'API_KEY' is missing or not yet active in your Vercel Environment. ACTION REQUIRED: Please add 'API_KEY' in Vercel Settings and click REDEPLOY.";
+  // Silent check for key to prevent crashing
+  if (!apiKey || apiKey === "undefined" || apiKey.length < 10) {
+    console.error("Trade Desk: API_KEY is not configured in environment.");
+    return "Thank you for your inquiry. Our automated trade desk is currently undergoing a scheduled update. For immediate assistance with pricing or logistics, please contact our export team at genxoverseasindia1@gmail.com.";
   }
 
   try {
@@ -31,16 +32,15 @@ export async function getTradeAdvice(query: string, history: { role: string; tex
       contents: contents,
       config: {
         systemInstruction: `You are the Lead Export Strategist for GenX Overseas India.
-        GENX PROFILE: Indian Export-Import house specializing in Agriculture (Salem Turmeric, Nasik Onions, Basmati Rice), Electronics, and Industrial Castings.
-        GOAL: Provide expert trade advice. Use industry terms like FOB, CIF, MT, FCL.
-        REAL-TIME: Use googleSearch to find current Mandi prices for commodities.
-        CONTACT: Lead inquiries to genxoverseasindia1@gmail.com.`,
+        GENX PROFILE: Indian Export-Import house (Turmeric, Onions, Rice, Electronics).
+        GOAL: Provide expert trade advice. Use industry terms like FOB, CIF, MT.
+        REAL-TIME: Use googleSearch for current Mandi prices.
+        If asked for price, mention that GenX offers competitive rates matching these market standards.`,
         tools: [{ googleSearch: {} }],
-        temperature: 0.2,
+        temperature: 0.1,
       },
     });
 
-    // Extract Grounding
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     let citation = "";
     if (groundingChunks && groundingChunks.length > 0) {
@@ -48,28 +48,20 @@ export async function getTradeAdvice(query: string, history: { role: string; tex
         .map((chunk: any) => chunk.web?.uri)
         .filter((uri: string) => !!uri);
       if (urls.length > 0) {
-        citation = `\n\n📊 Market Source: ${urls[0]}`;
+        citation = `\n\n(Market Data Source: ${urls[0]})`;
       }
     }
 
-    return (response.text || "Analyzing markets...") + citation;
+    return (response.text || "I am analyzing the current market data for you...") + citation;
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-
-    // 2. Specific Error Mapping for User Support
-    if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('API_KEY_INVALID')) {
-      return "AUTH_ERROR: The API Key is invalid. Please verify the key in Vercel matches your Google AI Studio key exactly.";
+    
+    // Professional fallback based on error type
+    if (error?.status === 401 || error?.status === 403) {
+      return "Our trade intelligence system is currently verifying updated export protocols. For an instant quote, please email genxoverseasindia1@gmail.com with your requirements.";
     }
 
-    if (error?.status === 403 || error?.message?.includes('403')) {
-      return "PERMISSION_ERROR: Access Denied. Your Google Project may not have the Gemini API enabled, or your key is restricted.";
-    }
-
-    if (error?.status === 429) {
-      return "QUOTA_ERROR: Hourly limit reached for the free AI tier. Please try again in 1 hour.";
-    }
-
-    return "CONNECTION_ERROR: I'm having trouble reaching the trade database. Please ensure your Vercel Deployment is fresh and your internet is stable.";
+    return "The trade desk is currently processing high volume. Please rephrase your question or contact our support team directly for a priority response.";
   }
 }
