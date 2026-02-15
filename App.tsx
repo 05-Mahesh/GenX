@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -7,6 +8,7 @@ import CaseStudies from './components/CaseStudies';
 import QuoteModal from './components/QuoteModal';
 import GlobalReach from './components/GlobalReach';
 import Footer from './components/Footer';
+import FloatingChatBot from './components/FloatingChatBot'; // Import the new bot
 import { PRODUCTS } from './constants';
 import { Product } from './types';
 
@@ -151,6 +153,9 @@ const App: React.FC = () => {
         onClose={() => setIsQuoteModalOpen(false)} 
         selectedProduct={selectedProduct} 
       />
+
+      {/* The Free Chat Bot Widget */}
+      <FloatingChatBot />
     </div>
   );
 };
